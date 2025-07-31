@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>ALT File Editor - Italian Localization Tool</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+      // Fallback if Google CDN fails
+        if (typeof jQuery === 'undefined') {
+            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+        }
+    </script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <style>
+      :root {
+          --bg-primary: #f8f9fa;
+          --bg-secondary: white;
+          --text-primary: #333;
+          --text-secondary: #6c757d;
+          --border-color: #dee2e6;
+          --status-bg: #d1ecf1;
+          --status-border: #bee5eb;
+          --status-text: #0c5460;
+          --modified-bg: #fff3cd;
+          --modified-hover: #ffeaa7;
+    }
+
+    [data-theme="dark"] .dataTables_wrapper .dataTables_filter input,
+    [data-theme="dark"] .dataTables_wrapper .dataTables_length select {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+
+    [data-theme="dark"] .dataTables_wrapper .dataTables_info,
+    [data-theme="dark"] .dataTables_wrapper .dataTables_length label,
+    [data-theme="dark"] .dataTables_wrapper .dataTables_filter label {
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color);
+    }
+
+    [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background-color: var(--bg-primary);
+    }
+
+    [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background-color: #007bff;
+        color: white !important;
+    }
+
+    [data-theme="dark"] {
+          --bg-primary: #1a1a1a;
+          --bg-secondary: #2d2d2d;
+          --text-primary: #f8f9fa;
+          --text-secondary: #adb5bd;
+          --border-color: #495057;
+          --status-bg: #2d3748;
+          --status-border: #4a5568;
+          --status-text: #e2e8f0;
+          --modified-bg: #3d3d00;
+          --modified-hover: #4d4d00;
+    }
+
+      body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-primary);
+      margin: 0;
+      padding: 20px;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+    }        
+        .container {
+          max-width: 95%;
+          margin: 0 auto;
+          padding: 20px;
+          background: var(--bg-secondary);
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          transition: all 0.3s ease;
+        }        
+        
+        .upload-area {
+          border: 2px dashed var(--border-color);
+          border-radius: 8px;
+          padding: 40px;
+          text-align: center;
+          margin-bottom: 30px;
+          background-color: var(--bg-primary);
+          transition: all 0.3s ease;
+        }        
+        
+        .upload-area:hover {
+            border-color: #007bff;
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .status-bar {
+          background-color: var(--status-bg);
+          border: 1px solid var(--status-border);
+          color: var(--status-text);
+          padding: 15px;
+          margin-bottom: 20px;
+          border-radius: 4px;
+          display: none;
+          transition: all 0.3s ease;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .dark-mode-btn {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 1000;
+          padding: 10px 15px;
+          background-color: var(--text-secondary);
+          color: var(--bg-secondary);
+          border: none;
+          border-radius: 50px;
+          cursor: pointer;
+          font-size: 16px;
+          transition: all 0.3s ease;
+        }
+
+        .dark-mode-btn:hover {
+          transform: scale(1.1);
+        }
+        
+        .it-text-input {
+          width: 100%;
+          box-sizing: border-box;
+          min-height: 40px;
+          padding: 8px;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          font-size: 14px; /* Same as English text */
+          background-color: var(--bg-secondary);
+          color: var(--text-primary);
+          resize: none;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Same as English */
+          white-space: pre-wrap;
+          overflow: hidden;
+          transition: all 0.3s ease;
+        }
+
+        .it-text-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        .modified-row {
+          background-color: var(--modified-bg) !important;
+        }
+
+        .modified-row:hover {
+            background-color: var(--modified-hover) !important;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>LocZ - ALT File Editor</h1>
+      <button class="dark-mode-btn" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+      <!-- Controls Row -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button class="btn" id="showModifiedBtn" style="display: none;">Show Modified Only</button>
+          <span id="totalCount" style="color: var(--text-secondary); font-size: 14px;"></span>
+        </div>
+      </div>
+      <!-- File Upload Section -->
+      <div class="upload-area" id="uploadArea">
+        <h3>Upload your weekly ALT Excel file</h3>
+        <p>Click the button below to select your file</p>
+        <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+          📁 Choose File
+        </button>
+      </div>
+      <!-- Status Messages -->
+      <div class="status-bar" id="statusBar">
+        <span id="statusText"></span>
+      </div>
+      <!-- Export Section -->
+      <div id="exportSection" style="margin-bottom: 20px; display: none;">
+        <button class="btn btn-success" id="exportBtn">
+          📤 Export Modified Translations
+        </button>
+        <span id="modifiedCount" style="margin-left: 10px; color: #6c757d;"></span>
+      </div>
+      <!-- Similarity Search Filtering -->
+      <div id="similaritySearch" style="margin-bottom: 20px; display: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="text" id="similarityInput" placeholder="Search for similar translations..." style="flex: 1; padding: 10px; border: 1px solid #dee2e6; border-radius: 4px;">
+          <button class="btn btn-primary" id="similarityBtn">🔍 Find Similar</button>
+          <button class="btn" id="clearSimilarityBtn" style="display: none;">✕ Clear</button>
+        </div>
+        <div id="similarityStatus" style="margin-top: 10px; font-size: 14px; color: #6c757d;"></div>
+      </div>
+      <!-- Translations Table -->
+      <table id="translationsTable" class="display">
+        <thead>
+          <tr>
+            <th>String ID</th>
+            <th>English</th>
+            <th>Italian</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+    <script>
+      let translationsTable;
+
+        // Use vanilla JS to ensure it works
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait a bit for jQuery to fully load
+            checkExistingSession();
+            setTimeout(function() {
+                if (typeof $ !== 'undefined') {
+                    console.log('jQuery loaded successfully');
+                    $('#fileInput').change(handleFileUpload);
+                } else {
+                    console.error('jQuery still not loaded, using vanilla JS fallback');
+                    document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+                }
+            }, 100);
+        });
+
+        function checkExistingSession() {
+            const sessionId = localStorage.getItem('alt-editor-session');
+            if (sessionId) {
+                showStatus('Restoring previous session...', 'success');
+                initializeTable();
+            }
+        }
+
+        function handleFileUpload() {
+            const file = this.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            showStatus('Uploading file...', 'info');
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('alt-editor-session', data.session_id);
+                    localStorage.setItem('alt-editor-session-time', new Date().toISOString());
+                    showStatus(data.message, 'success');
+                    initializeTable();
+                } else {
+                    showStatus(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showStatus('Error: ' + error.message, 'error');
+            });
+        }
+
+        function initializeTable() {
+            $('#uploadArea').hide();
+            $('#translationsTable').show();
+            $('#exportSection').show();
+            updateModifiedCount();
+            $('#showModifiedBtn').show().click(toggleModifiedFilter);
+            initializeTheme();
+            updateTotalCount();
+            
+            $('#similaritySearch').show()
+            <!-- The button is disabled until the embedding pre-processing is ready -->
+            $('#similarityBtn').prop('disabled', true).text('⏳Processing...');
+            checkSimilarityProgress();
+
+            $('#exportBtn').click(function() {
+                window.location.href = '/api/export';
+            })
+            <!-- $('#similarityBtn').click(performSimilaritySearch); -->
+            $('#similarityInput').keypress(function(e) {
+                if (e.which === 13) performSimilaritySearch(); // Enter key
+            });
+            $('#clearSimilarityBtn').click(clearSimilaritySearch);
+            
+            translationsTable = $('#translationsTable').DataTable({
+                serverSide: true,
+                processing: true,
+                ajax: '/api/translations',
+                columns: [
+                    { data: 'str_id', width: '20%' },
+                    { data: 'en_text', width: '40%' },
+                    { 
+                        data: 'it_text', 
+                        width: '40%',
+                        className: 'it-text-col',
+                        render: function(data, type, row) {
+                            if (type === 'display') {
+                                return `<textarea class="it-text-input" data-id="${row.id}" rows="2">${data}</textarea>`;
+                            }
+                            return data;
+                        }
+                    }
+                ],
+                pageLength: 50,
+                lengthMenu: [[25, 50, 100, 500], [25, 50, 100, 500]],
+                drawCallback: function() {
+                    $('.it-text-input').each(function() {
+                        const id = $(this).data('id');
+                        const savedEdit = localStorage.getItem(`edit_${id}`);
+                        if (savedEdit) {
+                            <!-- $(this).val(savedEdit); -->
+                            $(this).closest('tr').addClass('modified-row');
+                        }
+                    });
+                    // Add edit functionality to textareas
+                    $('.it-text-input').off('blur').on('blur', function() {
+                        const id = $(this).data('id');
+                        const newText = $(this).val();
+                        updateTranslation(id, newText, this);
+                    });
+                }
+            });
+        }
+
+        function updateTranslation(id, newText, element) {
+            fetch('/api/update_translation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: id,
+                    it_text: newText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.is_modified) {
+                        localStorage.setItem(`edit_${id}`, newText);
+                        console.log(`Saved edit for ${id}: ${newText}`);
+                        $(element).closest('tr').addClass('modified-row');
+                    } else {
+                        localStorage.removeItem(`edit_${id}`);
+                        console.log(`Removed edit for ${id}`);
+                        $(element).closest('tr').removeClass('modified-row');
+                    }
+                    updateModifiedCount()
+                    // Green border = saved successfully
+                    element.style.borderColor = '#28a745';
+                    setTimeout(() => {
+                        element.style.borderColor = '';
+                    }, 1500);
+                } else {
+                    // Red border = error
+                    element.style.borderColor = '#dc3545';
+                }
+            })
+            .catch(error => {
+                console.error('Error updating translation:', error);
+                element.style.borderColor = '#dc3545';
+            });
+        }
+
+        function showStatus(message, type) {
+            const statusBar = $('#statusBar');
+            const statusText = $('#statusText');
+            
+            statusText.text(message);
+            statusBar.show();
+            
+            if (type === 'success') {
+                setTimeout(() => statusBar.fadeOut(), 3000);
+            }
+        }
+
+        function updateModifiedCount() {
+            // Count modified entries in localStorage
+            let count = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                if (localStorage.key(i).startsWith('edit_')) {
+                    count++;
+                }
+            }
+            $('#modifiedCount').text(count > 0 ? `${count} modified translations` : 'No modifications yet');
+        }
+
+        function performSimilaritySearch() {
+            const searchText = $('#similarityInput').val().trim();
+            if (!searchText) return;
+    
+            <!-- $('#similarityStatus').text('Searching for similar translations...'); -->
+            $('#clearSimilarityBtn').show();
+    
+            // Reload table with similarity filter
+            translationsTable.ajax.url('/api/translations?similarity_search=' + encodeURIComponent(searchText)).load();
+        }
+
+        function clearSimilaritySearch() {
+            $('#similarityInput').val('');
+            $('#similarityStatus').text('');
+            $('#clearSimilarityBtn').hide();
+    
+            // Reload table without filter
+            translationsTable.ajax.url('/api/translations').load();
+        }
+
+        function checkSimilarityProgress() {
+            fetch('/api/similarity_status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.complete || data.embeddings_exist) {
+                    $('#similarityBtn').prop('disabled', false).text('🔍 Find Similar');
+                    $('#similarityStatus').text(`✅ Similarity search ready (${data.total_processed} strings processed)`);
+                } else {
+                    $('#similarityStatus').text(`⏳ Processing similarities... ${data.processed}/${data.total} (${data.percentage}%)`);
+                    setTimeout(checkSimilarityProgress, 2000); // Check every 2 seconds
+                }
+            });
+        }
+
+    function performSimilaritySearch() {
+        const searchText = $('#similarityInput').val().trim();
+        if (!searchText) return;
+    
+        $('#similarityStatus').text('Searching for similar translations...');
+        $('#clearSimilarityBtn').show();
+    
+        // Reload table with similarity filter
+        const newUrl = '/api/translations?similarity_search=' + encodeURIComponent(searchText);
+        translationsTable.ajax.url(newUrl).load();
+    }
+
+    function clearSimilaritySearch() {
+        $('#similarityInput').val('');
+        $('#similarityStatus').text('✅ Similarity search ready');
+        $('#clearSimilarityBtn').hide();
+    
+        // Reload table without filter
+        translationsTable.ajax.url('/api/translations').load();
+    }
+
+    function toggleDarkMode() {
+        const body = document.body;
+        const btn = document.getElementById('darkModeBtn');
+        const isDark = body.getAttribute('data-theme') === 'dark';
+    
+        if (isDark) {
+            body.removeAttribute('data-theme');
+            btn.textContent = '🌙';
+            localStorage.setItem('alt-editor-theme', 'light');
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            btn.textContent = '☀️';
+            localStorage.setItem('alt-editor-theme', 'dark');
+        }
+    }
+
+    // Initialize theme on load
+    function initializeTheme() {
+        const savedTheme = localStorage.getItem('alt-editor-theme');
+        if (savedTheme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            document.getElementById('darkModeBtn').textContent = '☀️';
+        }
+    }
+
+    let showingModifiedOnly = false;
+
+    function toggleModifiedFilter() {
+        showingModifiedOnly = !showingModifiedOnly;
+        const btn = $('#showModifiedBtn');
+    
+        if (showingModifiedOnly) {
+            btn.text('Show All').css('background-color', '#ffc107');
+            translationsTable.ajax.url('/api/translations?show_modified=true').load();
+        } else {
+            btn.text('Show Modified Only').css('background-color', '');
+            translationsTable.ajax.url('/api/translations').load();
+        }
+    }
+
+    function updateTotalCount() {
+        fetch('/api/translations?get_total=true')
+        .then(response => response.json())
+        .then(data => {
+            $('#totalCount').text(`Total: ${data.recordsTotal} entries`);
+
+            if (total > 10000) {
+                $('#totalCount').append(' <span style="color: orange;">(Large dataset - "All" disabled for performance)</span>');
+            }
+        });
+    }
+    </script>
+  </body>
+</html>
