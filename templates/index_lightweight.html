@@ -199,17 +199,23 @@
   <body>
     <div class="container">
       <h1>LocZ - ALT File Editor</h1>
+      <div id="shortcutHelp" style="display: none; position: fixed; bottom: 20px; right: 20px; background: var(--status-bg); border: 1px solid var(--status-bored); padding: 10px; border-radius: 4px; font-size: 12px; z-index: 1000;">
+        <strong>Shortcuts:</strong><br>
+        Ctrl+F: Search | Ctrl+H: Replace<br>
+        Ctrl+M: Modified | Ctrl+S: Export<br>
+        Enter: Save in textbox
+      </div>
       <button class="dark-mode-btn" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
-      
       <!-- Current File Display -->
       <div id="currentFileDisplay" style="display: none; background-color: var(--status-bg); border: 1px solid var(--status-border); padding: 15px; margin-bottom: 20px; border-radius: 4px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <strong>📄 Currently working on:</strong> 
+            <strong>📄 Currently working on:</strong>
             <span id="currentFileName" style="font-family: monospace; color: var(--status-text);"></span>
           </div>
           <div style="font-size: 12px; color: var(--text-secondary);">
-            Uploaded: <span id="uploadTime"></span>
+            Uploaded:
+            <span id="uploadTime"></span>
           </div>
         </div>
       </div>
@@ -229,7 +235,6 @@
           📁 Choose File
         </button>
       </div>
-      
       <!-- Upload New File Button (shown when table is loaded) -->
       <div id="uploadNewSection" style="margin-bottom: 20px; display: none;">
         <button class="btn" id="uploadNewBtn" style="background-color: #ffc107; color: #212529;">
@@ -238,6 +243,24 @@
         <small style="color: var(--text-secondary); margin-left: 10px;">
           ⚠️ This will replace current data with new file
         </small>
+      </div>
+      <!-- Search & Replace Section -->
+      <div id="searchReplaceSection" style="margin-bottom: 20px; display: none;">
+        <div style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 15px;">
+          <h4 style="margin-top: 0;">🔍 Search & Replace All</h4>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="searchText" placeholder="Search for..." style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <input type="text" id="replaceText" placeholder="Replace with..." style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <button class="btn btn-primary" id="replaceAllBtn">Replace All</button>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <label><input type="checkbox" id="caseSensitive">
+              Case sensitive</label>
+            <label><input type="checkbox" id="wholeWord">
+              Whole words only</label>
+          </div>
+          <div id="replaceStatus" style="margin-top: 10px; font-size: 14px; color: var(--text-secondary);"></div>
+        </div>
       </div>
       <!-- Status Messages -->
       <div class="status-bar" id="statusBar">
@@ -263,6 +286,9 @@
     </div>
     <script>
       let translationsTable;
+        let undoStack = [];
+        let redoStack = [];
+        const MAX_UNDO_STEPS = 20;
 
         // Use vanilla JS to ensure it works
         document.addEventListener('DOMContentLoaded', function() {
@@ -277,6 +303,36 @@
                     document.getElementById('fileInput').addEventListener('change', handleFileUpload);
                 }
             }, 100);
+        });
+
+        $(document).keydown(function(e) {
+            if (e.ctrlKey && e.key === 'z' && undoStack.length > 0) {
+                e.preventDefault();
+                performUndo();
+            } else if (e.ctrlKey && e.key === 'y' && redoStack.length > 0) { 
+                e.preventDefault();
+                performRedo();
+            } else if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                $('.dataTables_filter input').focus();
+                $('html, body').animate({
+                    scrollTop: $('.dataTables_filter').offset().top - 100
+                }, 300);
+            } else if (e.ctrlKey && e.key === 'h') {
+                e.preventDefault();
+                $('#searchText').focus();
+                $('html, body').animate({
+                    scrollTop: $('#searchReplaceSection').offset().top - 100
+                }, 300);
+            } else if (e.ctrlKey && e.key === 'm') {
+                e.preventDefault();
+                $('#showModifiedBtn').click();
+            } else if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                if ($('#exportBtn').is(':visible')) {
+                    $('#exportBtn').click();
+                }
+            }
         });
 
         function checkExistingSession() {
@@ -338,8 +394,13 @@
                 translationsTable = null;
             }
             
+            // Short shortcut help for 10 seconds with table load
+            $('#shortcutHelp').show();
+            setTimeout(() => $('#shortcutHelp').fadeOut(), 10000);
+
             $('#uploadArea').hide();
             $('#uploadNewSection').show(); // Show "upload new file" button
+            $('#searchReplaceSection').show();
             $('#translationsTable').show();
             $('#exportSection').show();
             updateModifiedCount();
@@ -370,7 +431,76 @@
                     $('#fileInput').val('');
                 }
             });
-            
+
+            // Handle replace all
+            $('#replaceAllBtn').click(function() {
+                const searchText = $('#searchText').val().trim();
+                const replaceText = $('#replaceText').val();
+
+                if (!searchText) {
+                    $('#replaceStatus').text('❌ Please enter search text');
+                    return;
+                }
+
+                if (confirm(`Replace all instances of "${searchText}" with "${replaceText}"?`)) {
+                    // Store current state for undo
+                    const currentState = {
+                        localStorage: {},
+                        action: `Replace "${searchText}" with "${replaceText}"`
+                    };
+        
+                    // Save current localStorage state
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key.startsWith('edit_')) {
+                            currentState.localStorage[key] = localStorage.getItem(key);
+                        }
+                    }
+
+                    fetch('/api/replace_all', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            search_text: searchText,
+                            replace_text: replaceText,
+                            case_sensitive: $('#caseSensitive').is(':checked'),
+                            whole_word: $('#wholeWord').is(':checked'),
+                            store_undo: true  // Add this flag
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Clear redo stack because of new replace action
+                            redoStack = [];
+
+                            // Store undo data
+                            currentState.undoData = data.undo_data;
+                            undoStack.push(currentState);
+                            if (undoStack.length > MAX_UNDO_STEPS) {
+                                undoStack.shift(); // Remove oldest
+                            }
+
+                            $('#replaceStatus').text(`✅ Replaced ${data.updated_count} instances (Ctrl+Z to undo)`);
+                
+                            // Rest of existing code...
+                            translationsTable.ajax.reload(function() {
+                                data.updated_rows.forEach(row => {
+                                    if (row.is_modified) {
+                                        localStorage.setItem(`edit_${row.id}`, row.new_text);
+                                        $(`.it-text-input[data-id="${row.id}"]`).closest('tr').addClass('modified-row');
+                                    } else {
+                                        localStorage.removeItem(`edit_${row.id}`);
+                                        $(`.it-text-input[data-id="${row.id}"]`).closest('tr').removeClass('modified-row');
+                                    }
+                                });
+                                updateModifiedCount();
+                            });
+                        }
+                    });
+                }
+            });
+
             translationsTable = $('#translationsTable').DataTable({
                 serverSide: true,
                 processing: true,
@@ -408,6 +538,11 @@
                         updateTranslation(id, newText, this);
                     }).on('input', function() {
                         autoResizeTextarea(this);
+                    }).on('keydown', function(e) {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            $(this).blur();
+                        }
                     });
                     
                 }
@@ -532,6 +667,102 @@
         function autoResizeTextarea(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = Math.max(40, textarea.scrollHeight) + 'px';
+        }
+
+        function performUndo() {
+            if (undoStack.length === 0) return;
+    
+            const lastAction = undoStack.pop();
+    
+            if (confirm(`Undo: ${lastAction.action}?`)) {
+                // Store current state for redo before undoing
+                const currentState = {
+                    localStorage: {},
+                    action: lastAction.action,
+                    undoData: [] // Will be filled by the undo endpoint
+                };
+        
+                // Save current localStorage state for redo
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('edit_')) {
+                        currentState.localStorage[key] = localStorage.getItem(key);
+                    }
+                }
+
+                fetch('/api/undo_replace', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        undo_data: lastAction.undoData,
+                        store_redo: true  // Add this flag
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Store for redo
+                        currentState.undoData = data.redo_data;
+                        redoStack.push(currentState);
+                        if (redoStack.length > MAX_UNDO_STEPS) {
+                            redoStack.shift();
+                        }
+
+                        // Restore localStorage state
+                        Object.keys(localStorage).filter(key => key.startsWith('edit_')).forEach(key => {
+                            localStorage.removeItem(key);
+                        });
+                
+                        Object.entries(lastAction.localStorage).forEach(([key, value]) => {
+                            localStorage.setItem(key, value);
+                        });
+                
+                        $('#replaceStatus').text(`✅ Undone: ${lastAction.action} (Ctrl+Y to redo)`);
+                        translationsTable.ajax.reload();
+                        updateModifiedCount();
+                    }
+                });
+            } else {
+                // If cancelled, put it back
+                undoStack.push(lastAction);
+            }
+        }
+
+        function performRedo() {
+            if (redoStack.length === 0) return;
+    
+            const redoAction = redoStack.pop();
+    
+            if (confirm(`Redo: ${redoAction.action}?`)) {
+                fetch('/api/undo_replace', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ undo_data: redoAction.undoData })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Put back on undo stack
+                        undoStack.push(redoAction);
+
+                        // Restore localStorage state
+                        Object.keys(localStorage).filter(key => key.startsWith('edit_')).forEach(key => {
+                            localStorage.removeItem(key);
+                        });
+                
+                        Object.entries(redoAction.localStorage).forEach(([key, value]) => {
+                            localStorage.setItem(key, value);
+                        });
+                
+                        $('#replaceStatus').text(`✅ Redone: ${redoAction.action}`);
+                        translationsTable.ajax.reload();
+                        updateModifiedCount();
+                    }
+                });
+            } else {
+                // If cancelled, put it back
+                redoStack.push(redoAction);
+            }
         }
     </script>
   </body>

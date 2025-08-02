@@ -3,9 +3,6 @@ import sqlite3
 import pandas as pd
 import tempfile
 from datetime import datetime
-import json
-import threading
-import time
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1000 * 1024 * 1024  # 1000GB max file size
@@ -254,6 +251,111 @@ def export_modified():
         download_name=f'modified_translations_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx',
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
+
+@app.route('/api/replace_all', methods=['POST'])
+def replace_all():
+    data = request.get_json()
+    search_text = data.get('search_text', '')
+    replace_text = data.get('replace_text', '')
+    case_sensitive = data.get('case_sensitive', False)
+    whole_word = data.get('whole_word', False)
     
+    if not search_text:
+        return jsonify({'error': 'Search text cannot be empty'}), 400
+    
+    conn = sqlite3.connect('translations.db')
+    cursor = conn.cursor()
+    
+    # Get all Italian texts
+    cursor.execute('SELECT id, it_text, original_it_text FROM translations')
+    rows = cursor.fetchall()
+    
+    updated_count = 0
+    updated_ids = []
+
+    store_undo = data.get('store_undo', False)
+    undo_data = [] if store_undo else None
+    
+    for row_id, current_text, original_text in rows:
+        if not current_text:
+            continue
+            
+        # Perform replacement based on options
+        if case_sensitive:
+            if whole_word:
+                import re
+                pattern = r'\b' + re.escape(search_text) + r'\b'
+                new_text = re.sub(pattern, replace_text, current_text)
+            else:
+                new_text = current_text.replace(search_text, replace_text)
+        else:
+            if whole_word:
+                import re
+                pattern = r'\b' + re.escape(search_text) + r'\b'
+                new_text = re.sub(pattern, replace_text, current_text, flags=re.IGNORECASE)
+            else:
+                new_text = current_text.replace(search_text.lower(), replace_text)
+                new_text = current_text.replace(search_text.upper(), replace_text)
+                # Simple case-insensitive replace
+                import re
+                new_text = re.sub(re.escape(search_text), replace_text, current_text, flags=re.IGNORECASE)
+        
+        if new_text != current_text:
+            if store_undo:
+                undo_data.append({
+                                     'id': row_id,
+                                     'old_text': current_text,
+                                     'old_is_modified': 1 if current_text != original_text else 0
+                                 })
+            is_modified = 1 if new_text != original_text else 0
+            cursor.execute('UPDATE translations SET it_text = ?, is_modified = ? WHERE id = ?', 
+                         (new_text, is_modified, row_id))
+            updated_count += 1
+            updated_ids.append({'id': row_id, 'new_text': new_text, 'is_modified': is_modified})
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({
+                   'success': True,
+                   'updated_count': updated_count,
+                   'updated_rows': updated_ids,
+                   'undo_data': undo_data
+           })
+    
+@app.route('/api/undo_replace', methods=['POST'])
+def undo_replace():
+    data = request.get_json()
+    undo_data = data.get('undo_data', [])
+    store_redo = data.get('store_redo', False)
+    
+    conn = sqlite3.connect('translations.db')
+    cursor = conn.cursor()
+    
+    redo_data = []
+    
+    for item in undo_data:
+        if store_redo:
+            # Get current state for redo
+            cursor.execute('SELECT it_text, is_modified FROM translations WHERE id = ?', (item['id'],))
+            current = cursor.fetchone()
+            if current:
+                redo_data.append({
+                    'id': item['id'],
+                    'old_text': current[0],
+                    'old_is_modified': current[1]
+                })
+        
+        cursor.execute('UPDATE translations SET it_text = ?, is_modified = ? WHERE id = ?',
+                      (item['old_text'], item['old_is_modified'], item['id']))
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({
+        'success': True,
+        'redo_data': redo_data if store_redo else None
+    })
+
 if __name__ == '__main__':
     app.run(debug=False, port=5000)
