@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import sqlite3
 import pandas as pd
-# from werkzeug.utils import secure_filename
 import tempfile
 from datetime import datetime
 import json
@@ -11,7 +10,6 @@ import numpy as np
 import threading
 import time
 from sentence_transformers import SentenceTransformer
-from fuzzywuzzy import fuzz
 import re
 
 

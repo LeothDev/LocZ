@@ -5,5 +5,10 @@ ALT_File_Editor.spec
 LocZ.spec
 metrics.md
 translations.db
+dist
 
+.cleanvenv/
+.venv/
 build/
+modified_translations_20250731_220703.xlsx
+testing.xlsx
